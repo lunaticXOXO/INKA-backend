@@ -1,0 +1,106 @@
+import db.db_handler as database
+from datetime import datetime
+from flask import request,make_response,jsonify
+
+def AddJenisProduct():
+    conn = database.connector()
+    cursor = conn.cursor()
+    #id, nama = input("Input ID Jenis Produk  : "), input("Input Nama Jenis Produk : ")
+    #hasil = {"status" : "gagal"}
+    query = "INSERT INTO prd_r_jenisproduk (id, nama, tglDibuat) VALUES (%s,%s,%s)"
+    try:
+        data = request.json
+        id = data["id"]
+        nama = data["nama"]
+        tglDibuat = datetime.now()
+       
+        values = (id,nama,tglDibuat)
+        cursor.execute(query,values)
+        conn.commit()
+        print("Jenis Produk Baru Ditambahkan!")
+        hasil = {"status"  : "berhasil",
+                 "message" : "Data berhasil ditambah"}
+       
+    except Exception as e:
+        print("Error" + str(e))
+        hasil = {"status" : "gagal"}
+    return hasil
+
+def UpdateJenisProduk(id):
+   conn = database.connector()
+   try:
+        data = request.json
+    
+        nama = data['nama']
+        tglDibuat = data['tglDibuat']
+        id = data['id']
+        cursor = conn.cursor()
+        query = "UPDATE prd_r_jenisproduk SET nama = %s,tglDibuat = %s WHERE id = %s"
+        values = (nama,tglDibuat,id)
+        cursor.execute(query,values)
+        conn.commit()
+        hasil = {"status" : "berhasil"}
+   except Exception as e:
+        print("Error" + str(e))
+        hasil = {"status" : "gagal"}
+   return hasil
+
+
+
+def GetAllJenisProduk():
+    conn = database.connector()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM prd_r_jenisproduk"
+    cursor.execute(query)
+
+    row_headers = [x[0] for x in cursor.description]
+    records = cursor.fetchall()
+    json_data = []
+
+    for data in records :
+        json_data.append(dict(zip(row_headers,data)))
+    
+    conn.commit()
+    return make_response(jsonify(json_data),200)
+
+
+def GetJenisProductById(id_jproduk):
+    conn = database.connector()
+    cursor = conn.cursor()
+
+    data = request.json
+    #id_jproduk = data["id"]
+    query = "SELECT * FROM prd_r_jenisproduk WHERE id ='"+id_jproduk+"'"
+    cursor.execute(query)
+
+    row_headers = [x[0] for x in cursor.description]
+    records = cursor.fetchall()
+    json_data = []
+
+    for data in records:
+        json_data.append(dict(zip(row_headers,data)))
+    conn.commit()
+    return make_response(jsonify(json_data),200)
+   
+    
+
+def ShowJProdukJoinSJProduk():
+    conn = database.connector()
+    cursor = conn.cursor()
+
+    query = "SELECT a.id,a.nama,a.tglDibuat,"
+    query = query + "b.idNodal,b.nama,b.jnsProduk "
+    query = query + "FROM prd_r_jenisproduk a "
+    query = query + "JOIN prd_r_strukturjnsprd b ON b.jnsProduk = a.id"
+
+    cursor.execute(query)
+    row_headers = [x[0] for x in cursor.description]
+    records = cursor.fetchall()
+    json_data = []
+
+    for data in records:
+       json_data.append(dict(zip(row_headers,data)))
+    conn.commit()
+    
+    return make_response(jsonify(json_data),200)
